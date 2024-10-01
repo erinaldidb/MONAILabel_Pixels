@@ -121,8 +121,7 @@ export default class MonaiLabelPanel extends Component {
 
     const response = await this.client().info();
 
-    // remove the background
-    const labels = response.data.labels.splice(1)
+    const labels = response.data.labels
 
     const segmentations = [
       {
