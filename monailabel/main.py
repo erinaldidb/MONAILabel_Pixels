@@ -38,6 +38,7 @@ class Main:
     def args_start_server(self, parser):
         parser.add_argument("-a", "--app", help="App Directory")
         parser.add_argument("-s", "--studies", help="Studies Directory")
+        parser.add_argument("-t", "--table", help="Databricks' Pixels table")
         parser.add_argument(
             "-v", "--verbose", default="INFO", type=str, choices=["DEBUG", "INFO", "WARNING", "ERROR"], help="Log Level"
         )
@@ -289,6 +290,7 @@ class Main:
             "MONAI_ZOO_AUTH_TOKEN",
             "MONAI_LABEL_DATASTORE_PASSWORD",
             "MONAI_LABEL_DATASTORE_API_KEY",
+            "MONAI_LABEL_DATABRICKS_TOKEN",
         ]
         for k, v in settings.model_dump().items():
             v = f"'{json.dumps(v)}'" if isinstance(v, list) or isinstance(v, dict) else v
@@ -303,6 +305,8 @@ class Main:
         settings.MONAI_LABEL_APP_DIR = args.app
         settings.MONAI_LABEL_STUDIES = args.studies
         settings.MONAI_LABEL_APP_CONF = conf
+
+        settings.MONAI_LABEL_DATABRICKS_PIXELS_CATALOG_TABLE = args.table
 
         dirs = ["model", "lib", "logs", "bin"]
         for d in dirs:
