@@ -115,9 +115,9 @@ class Settings(BaseSettings):
         else "https://huggingface.co/facebook/sam2-hiera-large/resolve/main/sam2_hiera_l.yaml"
     )
 
-    MONAI_LABEL_DATABRICKS_TOKEN: str = os.environ.get("DATABRICKS_TOKEN")
-    MONAI_LABEL_DATABRICKS_WAREHOUSE_ID: str = os.environ.get("DATABRICKS_WAREHOUSE_ID")
-    MONAI_LABEL_DATABRICKS_HOSTNAME: str = os.environ.get("DATABRICKS_HOST")
+    MONAI_LABEL_DATABRICKS_TOKEN: str = os.environ.get("DATABRICKS_TOKEN", "")
+    MONAI_LABEL_DATABRICKS_WAREHOUSE_ID: str = os.environ.get("DATABRICKS_WAREHOUSE_ID", "")
+    MONAI_LABEL_DATABRICKS_HOSTNAME: str = os.environ.get("DATABRICKS_HOST", "")
     MONAI_LABEL_DATABRICKS_PIXELS_CATALOG_TABLE: str = "main.pixels.object_catalog"
 
     model_config = SettingsConfigDict(
