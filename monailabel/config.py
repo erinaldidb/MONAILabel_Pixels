@@ -98,6 +98,11 @@ class Settings(BaseSettings):
     MONAI_ZOO_REPO: str = "Project-MONAI/model-zoo/hosting_storage_v1"
     MONAI_ZOO_AUTH_TOKEN: str = ""
 
+    MONAI_LABEL_DATABRICKS_TOKEN: str = os.environ.get("DATABRICKS_TOKEN")
+    MONAI_LABEL_DATABRICKS_WAREHOUSE_ID: str = os.environ.get("DATABRICKS_WAREHOUSE_ID")
+    MONAI_LABEL_DATABRICKS_HOSTNAME: str = os.environ.get("DATABRICKS_HOST")
+    MONAI_LABEL_DATABRICKS_PIXELS_CATALOG_TABLE: str = "main.pixels.object_catalog"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=True,

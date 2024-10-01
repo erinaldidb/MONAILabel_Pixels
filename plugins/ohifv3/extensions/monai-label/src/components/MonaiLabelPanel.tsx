@@ -67,7 +67,8 @@ export default class MonaiLabelPanel extends Component {
       this.StudyInstanceUID = displaySet.StudyInstanceUID;
       this.FrameOfReferenceUID = displaySet.instances[0].FrameOfReferenceUID;
       this.displaySetInstanceUID = displaySet.displaySetInstanceUID;
-    }, 1000);
+
+    }, 10000);
   }
 
   async componentDidMount() {
