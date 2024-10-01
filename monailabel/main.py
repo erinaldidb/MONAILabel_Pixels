@@ -306,7 +306,8 @@ class Main:
         settings.MONAI_LABEL_STUDIES = args.studies
         settings.MONAI_LABEL_APP_CONF = conf
 
-        settings.MONAI_LABEL_DATABRICKS_PIXELS_CATALOG_TABLE = args.table
+        if args.table:
+            settings.MONAI_LABEL_DATABRICKS_PIXELS_CATALOG_TABLE = args.table
 
         dirs = ["model", "lib", "logs", "bin"]
         for d in dirs:
