@@ -15,10 +15,10 @@ function processResults(qidoStudies) {
   qidoStudies.forEach(qidoStudy =>
     studies.push({
       studyInstanceUid: getString(JSON.parse(qidoStudy[0])),
-      date: getString(JSON.parse(qidoStudy[1])), // YYYYMMDD
-      time: getString(JSON.parse(qidoStudy[2])), // HHmmss.SSS (24-hour, minutes, seconds, fractional seconds)
-      accession: getString(JSON.parse(qidoStudy[3])) || '', // short string, probably a number?
-      mrn: getString(JSON.parse(qidoStudy[4])) || '', // medicalRecordNumber
+      date: qidoStudy[1] || '', // YYYYMMDD
+      time: qidoStudy[2] || '', // HHmmss.SSS (24-hour, minutes, seconds, fractional seconds)
+      accession: qidoStudy[3] || '', // short string, probably a number?
+      mrn: qidoStudy[4] || '', // medicalRecordNumber
       patientName: utils.formatPN(getName(JSON.parse(qidoStudy[5]))) || '',
       description: getString(JSON.parse(qidoStudy[6])) || '',
       modalities: getString(getModalities(JSON.parse(qidoStudy[7]), JSON.parse(qidoStudy[8]))) || '',
@@ -107,22 +107,22 @@ async function qidoStudiesSearch(databricksClient, warehouseId, pixelsTable, ori
     filters.push(`'${origParams.endDate}' >= date:Value[0]`)
   }
 
-
   let body = {
     "warehouse_id": warehouseId,
-    "statement": `select *, count(*) as instances from (SELECT
-          meta:['0020000D'] as studyInstanceUid,
-          meta:['00080020'] as date,
-          meta:['00080030'] as time,
-          meta:['00080050'] as accession,
-          meta:['00100020'] as mrn,
-          meta:['00100010'] as patientName,
-          meta:['00081030'] as description,
-          meta:['00080060'] as modalities1,
-          meta:['00080061'] as modalities2
-       FROM ${pixelsTable})
+    "statement": `select
+        meta: ['0020000D'] as studyInstanceUid,
+        nullif(meta: ['00080020'].Value[0], '') as date,
+        nullif(meta: ['00080030'].Value[0], '') as time,
+        nullif(meta: ['00080050'].Value[0], '') as accession,
+        nullif(meta: ['00100020'].Value[0], '') as mrn,
+        first(meta: ['00100010'], true) as patientName,
+        first(meta: ['00081030'], true) as description,
+        concat('{"vr":"CS","Value":["', concat_ws('\/', collect_set(meta:['00080060'].Value[0])), '"]}') as modalities1,
+        concat('{"vr":"CS","Value":["', concat_ws('\/', collect_set(meta:['00080061'].Value[0])), '"]}') as modalities2,
+        count(*) as instances
+       FROM ${pixelsTable}
        WHERE ${filters.join(" AND ")}
-       GROUP BY ALL
+       GROUP BY studyInstanceUid, date, time, accession, mrn
        ${limit}
        ${offset}
        `,
@@ -189,6 +189,27 @@ async function qidoSeriesMetadataSearch(databricksClient, warehouseId, studyInst
   const result = await databricksClient.post(SQL_STATEMENT_API, body)
 
   return result.data.result.data_array;
+}
+
+async function persistMetadata(databricksClient, warehouseId, pixelsTable, dataset) {
+
+  let body = {
+    "warehouse_id": warehouseId,
+    "statement": `INSERT INTO ${pixelsTable}
+  (path, modificationTime, length, original_path, relative_path, local_path,
+   extension, file_type, path_tags, is_anon, meta, thumbnail)
+  VALUES (
+   'dbfs:/${dataset.path}',  to_timestamp(unix_timestamp('${dataset.datetime}', 'yyyyMMddHHmmss')), '${dataset.length}', 'dbfs:/${dataset.path}', '${dataset.path}', '/${dataset.path}',
+   'dcm', '', array(), 'true', '${dataset.meta}',
+   struct( 'ohif_export' AS origin, -1 AS height, -1 AS width, -1 AS nChannels, -1 AS mode, CAST('' AS binary)))`,
+    "wait_timeout": "30s",
+    "on_wait_timeout": "CANCEL"
+  }
+
+  //console.log(body)
+  const result = await databricksClient.post(SQL_STATEMENT_API, body)
+
+  return result;
 }
 
 /**
@@ -281,4 +302,4 @@ function mapParams(params, options = {}) {
   return final;
 }
 
-export { mapParams, qidoStudiesSearch, qidoSeriesSearch, qidoSeriesMetadataSearch, processResults, processSeriesMetadataResults };
+export { mapParams, qidoStudiesSearch, qidoSeriesSearch, qidoSeriesMetadataSearch, processResults, processSeriesMetadataResults, persistMetadata };

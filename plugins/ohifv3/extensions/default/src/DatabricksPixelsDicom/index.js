@@ -3,6 +3,7 @@ import OHIF from '@ohif/core';
 import dcmjs from 'dcmjs';
 
 import axios from "axios";
+import sha1 from "crypto-js/sha1";
 
 import {
   mapParams,
@@ -11,7 +12,8 @@ import {
   qidoStudiesSearch,
   processResults,
   processSeriesResults,
-  processSeriesMetadataResults
+  processSeriesMetadataResults,
+  persistMetadata
 } from './utils.js';
 
 const metadataProvider = OHIF.classes.MetadataProvider;
@@ -64,7 +66,6 @@ function createDatabricksPixelsDicom(dcmConfig, servicesManager) {
       studies: {
         mapParams: mapParams.bind(),
         search: async function (origParams) {
-          console.log(origParams)
           console.info("createDatabricksPixelsDicom - query studies")
 
           const results = await qidoStudiesSearch(databricksClient, warehouseId, dicomConfig.pixelsTable, origParams);
@@ -137,6 +138,9 @@ function createDatabricksPixelsDicom(dcmConfig, servicesManager) {
               } = naturalizedInstancesMetadata;
 
               naturalizedInstancesMetadata.imageId = imageId;
+              naturalizedInstancesMetadata.wadoUri = databricksClient.defaults.baseURL + "fs/files/" + instance.relative_path
+
+              naturalizedInstancesMetadata.volumeRoot = instance.relative_path.split("/").slice(0, 4).join("/")
 
               if (!seriesSummaryMetadata[naturalizedInstancesMetadata.SeriesInstanceUID]) {
                 seriesSummaryMetadata[naturalizedInstancesMetadata.SeriesInstanceUID] = {
@@ -182,8 +186,64 @@ function createDatabricksPixelsDicom(dcmConfig, servicesManager) {
       },
     },
     store: {
-      dicom: async (dataset, request, dicomDict) => {
-        console.warn(' store dicom not implemented');
+      dicom: async naturalizedReport => {
+
+        const reportBlob = dcmjs.data.datasetToBlob(naturalizedReport);
+        var  instance = {}
+        if (naturalizedReport.ConceptNameCodeSequence?.CodeValue == '126000'){
+        //this is a measurement
+          instance = DicomMetadataStore.getInstance(
+            naturalizedReport.StudyInstanceUID,
+            naturalizedReport.CurrentRequestedProcedureEvidenceSequence[0].ReferencedSeriesSequence.SeriesInstanceUID,
+            naturalizedReport.CurrentRequestedProcedureEvidenceSequence[0].ReferencedSeriesSequence.ReferencedSOPSequence.ReferencedSOPInstanceUID
+          );
+        }else { 
+          //this is a segmentation
+          instance = DicomMetadataStore.getInstance(
+            naturalizedReport.StudyInstanceUID,
+            naturalizedReport.ReferencedSeriesSequence.SeriesInstanceUID,
+            naturalizedReport.ReferencedSeriesSequence.ReferencedInstanceSequence[0].ReferencedSOPInstanceUID
+          );
+        }
+
+        const volumePath = instance.volumeRoot
+        const filePath = volumePath + "/ohif/exports/" +
+          naturalizedReport.StudyInstanceUID + "/" +
+          naturalizedReport.SeriesInstanceUID + "/" +
+          naturalizedReport.SOPInstanceUID + ".dcm"
+
+        const response = await databricksClient.put("fs/files/" + filePath,
+          reportBlob, {
+          headers: { 'Content-Type': 'application/octet-stream' },
+          maxBodyLength: Infinity,
+          maxContentLength: Infinity,
+          responseType: 'json'
+        })
+
+        if (response.status == 204) {
+          console.log("File saved correclty in volume path", naturalizedReport.filePath)
+        }
+
+        var meta = denaturalizeDataset(naturalizedReport)
+        delete meta['7FE00010']
+        delete meta['60003000']
+        meta['fileSize'] = reportBlob.size
+        meta['hash'] = sha1(reportBlob).toString()
+
+        naturalizedReport.meta = meta
+        console.log(naturalizedReport)
+
+        const result = await persistMetadata(
+          databricksClient,
+          warehouseId,
+          dicomConfig.pixelsTable,
+          {
+            path: filePath,
+            meta: JSON.stringify(naturalizedReport.meta),
+            datetime: "" + naturalizedReport.ContentDate + naturalizedReport.ContentTime,
+            length: reportBlob.size
+          }
+        )
       }
     },
     getImageIdsForDisplaySet(displaySet) {
@@ -233,7 +293,7 @@ function createDatabricksPixelsDicom(dcmConfig, servicesManager) {
       console.log('deleteStudyMetadataPromise not implemented');
     },
     getStudyInstanceUIDs: ({ params, query }) => {
-      console.log("getStudyInstanceUIDs")
+      console.log("getStudyInstanceUIDs", params, query)
       const { StudyInstanceUIDs: paramsStudyInstanceUIDs } = params;
       const queryStudyInstanceUIDs = utils.splitComma(query.getAll('StudyInstanceUIDs'));
 

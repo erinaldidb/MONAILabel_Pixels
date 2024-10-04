@@ -85,3 +85,42 @@ class DatabricksClient(DICOMwebClient):
             to_return.append(ds)
         
         return to_return
+    
+    def retrieve_series_metadata(
+        self,
+        study_instance_uid: str,
+        series_instance_uid: str,
+    ) -> List[Dict[str, dict]]:
+        
+        filters_list = []
+
+        filters_list.append(f"meta:['0020000D'].Value[0] = '{study_instance_uid}'")
+        filters_list.append(f"meta:['0020000E'].Value[0] = '{series_instance_uid}'")
+
+        filters_list = ' and '.join(filters_list)
+
+        data = {
+            "warehouse_id": f"{self.warehouse_id}",
+            "statement": f"""SELECT
+                meta:['00081115'] as `00081115`
+                FROM {self.table} where {filters_list}""",
+            "wait_timeout": "30s",
+            "on_wait_timeout": "CANCEL"
+        }
+
+        dataset = requests.post(self.base_url+"/sql/statements/", json=data, headers=self.headers).json()
+
+        if(dataset['status']['state'] == 'FAILED'):
+            raise MONAILabelException(dataset['status']['error']['error_code'],
+                                      dataset['status']['error']['message'])
+
+        to_return = []
+
+        if 'data_array' in dataset['result']:
+            for value in dataset['result']['data_array']:
+                obj = {
+                    '00081115': json.loads(value[0]), #ReferencedSeriesSequence
+                }   
+                to_return.append(obj)
+
+        return to_return
