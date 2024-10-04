@@ -41,7 +41,7 @@ cd ..
 
 git apply ../extensions.patch
 
-cp ../config/monai_label.js platform/app/public/config/monai_label.js
+cp ../config/monai_label.js platform/app/public/config/default.js
 
 #copy Databricks Pixels integration
 echo "Installing Databricks Integration"
@@ -49,10 +49,11 @@ mkdir ./extensions/default/src/DatabricksPixelsDicom/
 cp ../extensions/default/src/DatabricksPixelsDicom/index.js ./extensions/default/src/DatabricksPixelsDicom/index.js
 cp ../extensions/default/src/DatabricksPixelsDicom/utils.js ./extensions/default/src/DatabricksPixelsDicom/utils.js
 cp ../extensions/default/src/getDataSourcesModule.js ./extensions/default/src/getDataSourcesModule.js
+cp ../extensions/cornerstone-dicom-seg/src/commandsModule.ts ./extensions/cornerstone-dicom-seg/src/commandsModule.ts
 
 yarn config set workspaces-experimental true
 yarn install
-APP_CONFIG=config/monai_label.js PUBLIC_URL=./ QUICK_BUILD=true yarn run build
+APP_CONFIG=config/default.js PUBLIC_URL=./ QUICK_BUILD=true yarn run build
 
 rm -rf ${install_dir}
 cp -r platform/app/dist/ ${install_dir}
