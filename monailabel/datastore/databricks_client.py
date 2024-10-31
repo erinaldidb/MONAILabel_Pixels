@@ -32,9 +32,11 @@ class DatabricksClient(DICOMwebClient):
 
         data = {
             "warehouse_id": f"{self.warehouse_id}",
-            "statement": f"""SELECT
-                meta:['0020000D'], meta:['0020000E']
-                FROM {self.table} where {filters_list}""",
+            "statement": f"""
+            with ct as (
+                SELECT distinct(meta:['0020000D'], meta:['0020000E']) as result FROM {self.table} where {filters_list}
+            )
+            select result.`0020000D`, result.`0020000E` from ct""",
             "wait_timeout": "30s",
             "on_wait_timeout": "CANCEL"
         }
@@ -103,7 +105,8 @@ class DatabricksClient(DICOMwebClient):
             "warehouse_id": f"{self.warehouse_id}",
             "statement": f"""SELECT
                 meta:['00081115'] as `00081115`
-                FROM {self.table} where {filters_list}""",
+                FROM {self.table}
+                where {filters_list} and meta:['00081115'] is not null""",
             "wait_timeout": "30s",
             "on_wait_timeout": "CANCEL"
         }
