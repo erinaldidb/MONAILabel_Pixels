@@ -118,7 +118,7 @@ class Settings(BaseSettings):
     MONAI_LABEL_DATABRICKS_TOKEN: str = os.environ.get("DATABRICKS_TOKEN", "")
     MONAI_LABEL_DATABRICKS_WAREHOUSE_ID: str = os.environ.get("DATABRICKS_WAREHOUSE_ID", "")
     MONAI_LABEL_DATABRICKS_HOSTNAME: str = os.environ.get("DATABRICKS_HOST", "")
-    MONAI_LABEL_DATABRICKS_PIXELS_CATALOG_TABLE: str = "main.pixels.object_catalog"
+    MONAI_LABEL_DATABRICKS_PIXELS_CATALOG_TABLE: str = os.environ.get("DATABRICKS_PIXELS_TABLE", "main.pixels.object_catalog")
 
     model_config = SettingsConfigDict(
         env_file=".env",

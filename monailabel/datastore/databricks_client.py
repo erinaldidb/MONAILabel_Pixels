@@ -34,9 +34,9 @@ class DatabricksClient(DICOMwebClient):
             "warehouse_id": f"{self.warehouse_id}",
             "statement": f"""
             with ct as (
-                SELECT distinct(meta:['0020000D'], meta:['0020000E']) as result FROM {self.table} where {filters_list}
+                SELECT distinct(meta:['0020000D'], meta:['0020000E'], meta:['0008103E']) as result FROM {self.table} where {filters_list}
             )
-            select result.`0020000D`, result.`0020000E` from ct""",
+            select result.`0020000D`, result.`0020000E`, result.`0008103E` from ct""",
             "wait_timeout": "30s",
             "on_wait_timeout": "CANCEL"
         }
@@ -53,7 +53,8 @@ class DatabricksClient(DICOMwebClient):
             for value in dataset['result']['data_array']:
                 obj = {
                     '0020000D': json.loads(value[0]), #StudyInstanceUID
-                    '0020000E': json.loads(value[1])  #SeriesInstanceUID
+                    '0020000E': json.loads(value[1]), #SeriesInstanceUID
+                    '0008103E': json.loads(value[2])  #SeriesDescription
                 }   
                 to_return.append(obj)
 
