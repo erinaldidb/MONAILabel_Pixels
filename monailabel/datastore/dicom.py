@@ -118,7 +118,7 @@ class DICOMWebDatastore(LocalDatastore):
 
     def _dicom_info(self, series_id):
         meta = Dataset.from_json(self._client.search_for_series(search_filters={"SeriesInstanceUID": series_id})[0])
-        fields = ["StudyDate", "StudyTime", "Modality", "RetrieveURL", "PatientID", "StudyInstanceUID"]
+        fields = ["StudyDate", "StudyTime", "Modality", "RetrieveURL", "PatientID", "StudyInstanceUID", "SeriesDescription"]
 
         info = {"SeriesInstanceUID": series_id}
         for f in fields:
