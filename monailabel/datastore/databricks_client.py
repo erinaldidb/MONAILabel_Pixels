@@ -24,6 +24,10 @@ class DatabricksClient(DICOMwebClient):
 
         if('Modality' in search_filters):
             filters_list.append(f"meta:['00080060'].Value[0] = '{search_filters['Modality']}'")
+            if 'CT' in search_filters['Modality']:
+                #check only axials images
+                filters_list.append(f"contains(lower(meta:['00080008']), 'axial')'")
+
         
         if('SeriesInstanceUID' in search_filters):
             filters_list.append(f"meta:['0020000E'].Value[0] = '{search_filters['SeriesInstanceUID']}'")
@@ -55,7 +59,7 @@ class DatabricksClient(DICOMwebClient):
                     '0020000D': json.loads(value[0]), #StudyInstanceUID
                     '0020000E': json.loads(value[1]), #SeriesInstanceUID
                     '0008103E': json.loads(value[2])  #SeriesDescription
-                }   
+                }
                 to_return.append(obj)
 
         return to_return
@@ -101,7 +105,7 @@ class DatabricksClient(DICOMwebClient):
         filters_list.append(f"meta:['0020000E'].Value[0] = '{series_instance_uid}'")
 
         filters_list = ' and '.join(filters_list)
-
+        #`00081115` Referenced Series Sequence 
         data = {
             "warehouse_id": f"{self.warehouse_id}",
             "statement": f"""SELECT
