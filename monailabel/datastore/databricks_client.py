@@ -26,7 +26,7 @@ class DatabricksClient(DICOMwebClient):
             filters_list.append(f"meta:['00080060'].Value[0] = '{search_filters['Modality']}'")
             if 'CT' in search_filters['Modality']:
                 #check only axials images
-                filters_list.append(f"contains(lower(meta:['00080008']), 'axial')'")
+                filters_list.append(f"contains(lower(meta:['00080008']), 'axial')")
 
         
         if('SeriesInstanceUID' in search_filters):
