@@ -21,7 +21,7 @@ function processResults(qidoStudies) {
       mrn: qidoStudy[4] || '', // medicalRecordNumber
       patientName: utils.formatPN(getName(JSON.parse(qidoStudy[5]))) || '',
       description: getString(JSON.parse(qidoStudy[6])) || '',
-      modalities: getString(getModalities(JSON.parse(qidoStudy[7]), JSON.parse(qidoStudy[8]))) || '',
+      modalities: qidoStudy[7] + qidoStudy[8],
       instances: Number(JSON.parse(qidoStudy[9])) || 1, // number
     })
   );
@@ -117,8 +117,8 @@ async function qidoStudiesSearch(databricksClient, warehouseId, pixelsTable, ori
         nullif(meta: ['00100020'].Value[0], '') as mrn,
         first(meta: ['00100010'], true) as patientName,
         first(meta: ['00081030'], true) as description,
-        concat('{"vr":"CS","Value":["', concat_ws('\/', collect_set(meta:['00080060'].Value[0])), '"]}') as modalities1,
-        concat('{"vr":"CS","Value":["', concat_ws('\/', collect_set(meta:['00080061'].Value[0])), '"]}') as modalities2,
+        array_join(collect_set(nullif(meta:['00080060'].Value[0], '')), '/') as modalities1,
+        array_join(collect_set(nullif(meta:['00080061'].Value[0], '')), '/') as modalities2,
         count(*) as instances
        FROM ${pixelsTable}
        WHERE ${filters.join(" AND ")}
@@ -159,36 +159,42 @@ async function qidoSeriesSearch(databricksClient, warehouseId, studyInstanceUid,
 }
 
 async function qidoSeriesMetadataSearch(databricksClient, warehouseId, studyInstanceUid, pixelsTable) {
-
+  var to_return = []
   let body = {
     "warehouse_id": warehouseId,
     "statement": `
-    with qico(
-      SELECT
-            meta:['0020000D'].Value[0] as StudyInstanceUID,
-            meta:['0020000E'].Value[0] as SeriesInstanceUID,
-            meta:['00080018'].Value[0] as SOPInstanceUID,
-            meta:['00080016'].Value[0] as SOPClassUID,
-            meta,
-            relative_path
-       FROM ${pixelsTable}
-    )
+      with qico(
+        SELECT
+              meta:['0020000D'].Value[0] as StudyInstanceUID,
+              meta:['0020000E'].Value[0] as SeriesInstanceUID,
+              meta:['00080018'].Value[0] as SOPInstanceUID,
+              meta:['00080016'].Value[0] as SOPClassUID,
+              meta,
+              relative_path
+        FROM ${pixelsTable}
+      )
 
-    select StudyInstanceUID, SeriesInstanceUID, collect_list(
-      struct(SOPInstanceUID,
-            SOPClassUID,
-            meta,
-            relative_path)
-    ) from qico
-       WHERE studyInstanceUid = '${studyInstanceUid}'
-       group by studyInstanceUid, seriesInstanceUid`,
-    "wait_timeout": "30s",
-    "on_wait_timeout": "CANCEL"
+      select StudyInstanceUID, SeriesInstanceUID, collect_list(
+        struct(SOPInstanceUID,
+              SOPClassUID,
+              meta,
+              relative_path)
+      ) from qico
+        WHERE studyInstanceUid = '${studyInstanceUid}'
+        group by studyInstanceUid, seriesInstanceUid`,
+      "wait_timeout": "30s",
+      "on_wait_timeout": "CANCEL"
   }
 
-  const result = await databricksClient.post(SQL_STATEMENT_API, body)
+  var result = await databricksClient.post(SQL_STATEMENT_API, body);
+  to_return = result.data.result.data_array
+  
+  while (result.data.result?.next_chunk_internal_link) {
+    result = await databricksClient.get(result.data.result.next_chunk_internal_link.split("/api/2.0/")[1])
+    to_return = to_return.concat(result.data.data_array)
+  }
 
-  return result.data.result.data_array;
+  return to_return
 }
 
 async function persistMetadata(databricksClient, warehouseId, pixelsTable, dataset) {
