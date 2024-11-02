@@ -187,7 +187,8 @@ function createDatabricksPixelsDicom(dcmConfig, servicesManager) {
     },
     store: {
       dicom: async naturalizedReport => {
-
+        
+        naturalizedReport.SeriesNumber = "9999" //hack for monailabel ordering fix
         const reportBlob = dcmjs.data.datasetToBlob(naturalizedReport);
         var  instance = {}
         if (naturalizedReport.ConceptNameCodeSequence?.CodeValue == '126000'){
