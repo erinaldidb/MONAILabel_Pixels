@@ -77,7 +77,7 @@ def dicom_web_download_series(study_id, series_id, save_dir, client: DICOMwebCli
 
     os.makedirs(save_dir, exist_ok=True)
     if not frame_fetch:
-        instances = client.retrieve_series(study_id, series_id)
+        instances = client.retrieve_series(study_id, series_id, save_dir=save_dir)
         for instance in instances:
             instance_id = str(instance["SOPInstanceUID"].value)
             file_name = os.path.join(save_dir, f"{instance_id}.dcm")
