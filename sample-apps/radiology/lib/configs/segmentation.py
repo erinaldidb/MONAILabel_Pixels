@@ -23,6 +23,8 @@ from monailabel.interfaces.tasks.infer_v2 import InferTask
 from monailabel.interfaces.tasks.train import TrainTask
 from monailabel.utils.others.generic import download_file, strtobool
 
+import json
+
 _, has_cp = optional_import("cupy")
 _, has_cucim = optional_import("cucim")
 
@@ -61,6 +63,10 @@ class Segmentation(TaskConfig):
             "heart_ventricle_right": 48,
             "pulmonary_artery": 49,
         }
+
+        if "labels" in conf:
+            #'{"lung_left":1,"lung_right":2}'
+            self.labels = json.loads(conf['labels'])
 
         # Model Files
         self.path = [
