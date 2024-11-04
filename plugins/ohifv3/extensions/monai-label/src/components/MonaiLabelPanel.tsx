@@ -53,6 +53,8 @@ export default class MonaiLabelPanel extends Component {
       info: {},
       action: {},
       segmentations: [],
+      SeriesInstanceUID: "",
+      StudyInstanceUID: ""
     };
 
     // Todo: fix this hack
@@ -63,12 +65,32 @@ export default class MonaiLabelPanel extends Component {
         viewport.displaySetInstanceUIDs[0]
       );
 
-      this.SeriesInstanceUID = displaySet.SeriesInstanceUID;
-      this.StudyInstanceUID = displaySet.StudyInstanceUID;
+      this.setState({
+        SeriesInstanceUID: displaySet.SeriesInstanceUID,
+        StudyInstanceUID: displaySet.StudyInstanceUID
+      })
+
       this.FrameOfReferenceUID = displaySet.instances[0].FrameOfReferenceUID;
       this.displaySetInstanceUID = displaySet.displaySetInstanceUID;
 
     }, 5000);
+  }
+
+  refreshUIDs = () => {
+
+    const { uiNotificationService, viewportGridService, displaySetService } = this.props.servicesManager.services
+
+    const { viewports, activeViewportId } = viewportGridService.getState();
+      const viewport = viewports.get(activeViewportId);
+      const displaySet = displaySetService.getDisplaySetByUID(
+        viewport.displaySetInstanceUIDs[0]
+      );
+
+    this.setState({
+      SeriesInstanceUID: displaySet.SeriesInstanceUID,
+      StudyInstanceUID: displaySet.StudyInstanceUID
+    })
+
   }
 
   async componentDidMount() {
@@ -139,6 +161,8 @@ export default class MonaiLabelPanel extends Component {
     this.props.commandsManager.runCommand('loadSegmentationsForViewport', {
       segmentations
     });
+
+    this.refreshUIDs();
 
     if (response.status !== 200) {
       this.notification.show({
@@ -328,8 +352,8 @@ delete onInfoLabelNames.background;
             tabIndex={1}
             info={this.state.info}
             viewConstants={{
-              SeriesInstanceUID: this.SeriesInstanceUID,
-              StudyInstanceUID: this.StudyInstanceUID,
+              SeriesInstanceUID: this.state.SeriesInstanceUID,
+              StudyInstanceUID: this.state.StudyInstanceUID,
             }}
             client={this.client}
             notification={this.notification}
@@ -342,8 +366,8 @@ delete onInfoLabelNames.background;
             tabIndex={2}
             info={this.state.info}
             viewConstants={{
-              SeriesInstanceUID: this.SeriesInstanceUID,
-              StudyInstanceUID: this.StudyInstanceUID,
+              SeriesInstanceUID: this.state.SeriesInstanceUID,
+              StudyInstanceUID: this.state.StudyInstanceUID,
             }}
             client={this.client}
             notification={this.notification}
@@ -359,8 +383,8 @@ delete onInfoLabelNames.background;
             tabIndex={3}
             info={this.state.info}
             viewConstants={{
-              SeriesInstanceUID: this.SeriesInstanceUID,
-              StudyInstanceUID: this.StudyInstanceUID,
+              SeriesInstanceUID: this.state.SeriesInstanceUID,
+              StudyInstanceUID: this.state.StudyInstanceUID,
             }}
             client={this.client}
             notification={this.notification}
@@ -376,8 +400,8 @@ delete onInfoLabelNames.background;
             info={this.state.info}
             // Here we have to send element - In OHIF V2 - const element = cornerstone.getEnabledElements()[this.props.activeIndex].element;
             viewConstants={{
-              SeriesInstanceUID: this.SeriesInstanceUID,
-              StudyInstanceUID: this.StudyInstanceUID,
+              SeriesInstanceUID: this.state.SeriesInstanceUID,
+              StudyInstanceUID: this.state.StudyInstanceUID,
             }}
             client={this.client}
             notification={this.notification}
