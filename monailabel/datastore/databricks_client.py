@@ -6,9 +6,13 @@ from io import BytesIO
 from pydicom import dcmread
 from pydicom.dataset import Dataset
 from dicomweb_client import DICOMwebClient
+import os
+import logging
+import multiprocessing
 
 from monailabel.interfaces.exception import MONAILabelError, MONAILabelException
 
+logger = logging.getLogger(__name__)
 
 class DatabricksClient(DICOMwebClient):
     def __init__(self, url:str, token:str, warehouse_id:str, table:str):
@@ -68,12 +72,13 @@ class DatabricksClient(DICOMwebClient):
         self,
         study_instance_uid: str,
         series_instance_uid: str,
-        media_types: Optional[Tuple[Union[str, Tuple[str, str]], ...]] = None
+        media_types: Optional[Tuple[Union[str, Tuple[str, str]], ...]] = None,
+        save_dir: str = "/tmp/"
     ) -> List[Dataset]:
-        
+
         data = {
             "warehouse_id": f"{self.warehouse_id}",
-            "statement": f"""SELECT local_path FROM {self.table} where 
+            "statement": f"""SELECT local_path, meta:['00080018'].Value[0] as SOPInstanceUID FROM {self.table} where 
             meta:['0020000E'].Value[0] = '{series_instance_uid}' and
             meta:['0020000D'].Value[0] = '{study_instance_uid}'
             """,
@@ -82,16 +87,20 @@ class DatabricksClient(DICOMwebClient):
         }
 
         dataset = requests.post(self.base_url+"/sql/statements/", json=data, headers=self.headers).json()
-        paths = [path[0] for path in dataset['result']['data_array']]
+        results = [(result[0], save_dir, result[1]) for result in dataset['result']['data_array']]
 
-        to_return = []
-
-        for path in paths:
-            content = requests.get(self.base_url+f"/fs/files{path}", headers=self.headers).content
-            ds = dcmread(BytesIO(content))
-            to_return.append(ds)
+        with multiprocessing.Pool() as pool:
+            pool.map(self.download_dicom_file, results)
         
-        return to_return
+        return []
+    
+    def download_dicom_file(self, result):
+        file_path, save_dir, instance_id = result
+        content = requests.get(self.base_url+f"/fs/files{file_path}", headers=self.headers).content
+        file_name = os.path.join(save_dir, f"{instance_id}.dcm")
+        with open(file_name, "wb") as file:
+            file.write(content)
+        return file_path
     
     def retrieve_series_metadata(
         self,
