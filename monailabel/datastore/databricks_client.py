@@ -51,9 +51,11 @@ class DatabricksClient(DICOMwebClient):
 
         dataset = requests.post(self.base_url+"/sql/statements/", json=data, headers=self.headers).json()
 
-        if(dataset['status']['state'] == 'FAILED'):
+        if('status' in dataset and dataset['status']['state'] == 'FAILED'):
             raise MONAILabelException(dataset['status']['error']['error_code'],
                                       dataset['status']['error']['message'])
+        elif('status' not in dataset):
+            raise MONAILabelException(MONAILabelError.SERVER_ERROR, dataset)
 
         to_return = []
 
@@ -127,9 +129,11 @@ class DatabricksClient(DICOMwebClient):
 
         dataset = requests.post(self.base_url+"/sql/statements/", json=data, headers=self.headers).json()
 
-        if(dataset['status']['state'] == 'FAILED'):
+        if('status' in dataset and dataset['status']['state'] == 'FAILED'):
             raise MONAILabelException(dataset['status']['error']['error_code'],
                                       dataset['status']['error']['message'])
+        elif('status' not in dataset):
+            raise MONAILabelException(MONAILabelError.SERVER_ERROR, dataset)
 
         to_return = []
 
