@@ -188,7 +188,7 @@ async function qidoSeriesMetadataSearch(databricksClient, warehouseId, studyInst
 
   var result = await databricksClient.post(SQL_STATEMENT_API, body);
   to_return = result.data.result.data_array
-  
+
   while (result.data.result?.next_chunk_internal_link) {
     result = await databricksClient.get(result.data.result.next_chunk_internal_link.split("/api/2.0/")[1])
     to_return = to_return.concat(result.data.data_array)

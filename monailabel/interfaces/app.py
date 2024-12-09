@@ -34,11 +34,11 @@ from monai.apps import download_and_extract
 from timeloop import Timeloop
 
 from monailabel.config import settings
+from monailabel.datastore.databricks_client import DatabricksClient
 from monailabel.datastore.dicom import DICOMwebClientX, DICOMWebDatastore
 from monailabel.datastore.dsa import DSADatastore
 from monailabel.datastore.local import LocalDatastore
 from monailabel.datastore.xnat import XNATDatastore
-from monailabel.datastore.databricks_client import DatabricksClient
 from monailabel.interfaces.datastore import Datastore, DefaultLabelTag
 from monailabel.interfaces.exception import MONAILabelError, MONAILabelException
 from monailabel.interfaces.tasks.batch_infer import BatchInferImageType, BatchInferTask
@@ -163,10 +163,12 @@ class MONAILabelApp:
             dw_client = DICOMwebClient(url=self.studies, session=dw_session)
         elif "databricks.com" in self.studies:
             logger.info("Creating DICOM Client for Databricks")
-            dw_client = DatabricksClient(url=self.studies, 
-                                         token=settings.MONAI_LABEL_DATABRICKS_TOKEN, 
-                                         warehouse_id=settings.MONAI_LABEL_DATABRICKS_WAREHOUSE_ID, 
-                                         table=settings.MONAI_LABEL_DATABRICKS_PIXELS_CATALOG_TABLE)
+            dw_client = DatabricksClient(
+                url=self.studies,
+                token=settings.MONAI_LABEL_DATABRICKS_TOKEN,
+                warehouse_id=settings.MONAI_LABEL_DATABRICKS_WAREHOUSE_ID,
+                table=settings.MONAI_LABEL_DATABRICKS_PIXELS_CATALOG_TABLE,
+            )
         else:
             if settings.MONAI_LABEL_DICOMWEB_USERNAME and settings.MONAI_LABEL_DICOMWEB_PASSWORD:
                 dw_session = create_session_from_user_pass(

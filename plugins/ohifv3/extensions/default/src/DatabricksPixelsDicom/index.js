@@ -187,7 +187,7 @@ function createDatabricksPixelsDicom(dcmConfig, servicesManager) {
     },
     store: {
       dicom: async naturalizedReport => {
-        
+
         naturalizedReport.SeriesNumber = "9999" //hack for monailabel ordering fix
         const reportBlob = dcmjs.data.datasetToBlob(naturalizedReport);
         var  instance = {}
@@ -198,7 +198,7 @@ function createDatabricksPixelsDicom(dcmConfig, servicesManager) {
             naturalizedReport.CurrentRequestedProcedureEvidenceSequence[0].ReferencedSeriesSequence.SeriesInstanceUID,
             naturalizedReport.CurrentRequestedProcedureEvidenceSequence[0].ReferencedSeriesSequence.ReferencedSOPSequence.ReferencedSOPInstanceUID
           );
-        }else { 
+        }else {
           //this is a segmentation
           instance = DicomMetadataStore.getInstance(
             naturalizedReport.StudyInstanceUID,
