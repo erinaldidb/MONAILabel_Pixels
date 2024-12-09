@@ -161,7 +161,7 @@ class MONAILabelApp:
             logger.info("Creating DICOM Credentials for Google Cloud")
             dw_session = create_session_from_gcp_credentials()
             dw_client = DICOMwebClient(url=self.studies, session=dw_session)
-        elif "databricks.com" in self.studies:
+        elif "databricks" in self.studies:
             logger.info("Creating DICOM Client for Databricks")
             dw_client = DatabricksClient(url=self.studies, 
                                          token=settings.MONAI_LABEL_DATABRICKS_TOKEN, 
