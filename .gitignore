@@ -166,5 +166,3 @@ tests/data
 # Packages
 node_modules
 yarn.lock
-apps/
-studies/

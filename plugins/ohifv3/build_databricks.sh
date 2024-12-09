@@ -41,7 +41,7 @@ cd ..
 
 git apply ../extensions.patch
 
-cp ../config/monai_label.js platform/app/public/config/monai_label.js
+cp ../config/databricks.js platform/app/public/config/databricks.js
 
 #copy Databricks Pixels integration
 echo "Installing Databricks Integration"
@@ -52,24 +52,16 @@ cp ../extensions/default/src/getDataSourcesModule.js ./extensions/default/src/ge
 
 yarn config set workspaces-experimental true
 yarn install
-<<<<<<< HEAD
 yarn run cli list
 
-APP_CONFIG=config/monai_label.js PUBLIC_URL=/ohif/ QUICK_BUILD=true yarn run build
-=======
-APP_CONFIG=config/monai_label.js PUBLIC_URL=./ QUICK_BUILD=true yarn run build
->>>>>>> b723bb8 (added pixels solution accelerator integration)
+APP_CONFIG=config/databricks.js PUBLIC_URL=./ QUICK_BUILD=true yarn run build
 
 rm -rf ${install_dir}
 cp -r platform/app/dist/ ${install_dir}
 echo "Copied OHIF to ${install_dir}"
-<<<<<<< HEAD
 
 cd ..
 rm -rf Viewers
 find .  -type d -name "node_modules" -exec rm -rf "{}" +
-=======
-#rm -rf ../Viewers
->>>>>>> b723bb8 (added pixels solution accelerator integration)
 
 cd ${curr_dir}
