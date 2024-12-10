@@ -54,7 +54,7 @@ function createDatabricksPixelsDicom(dcmConfig, servicesManager) {
       });
 
       databricksClient.defaults.headers.common['Authorization'] = `Bearer ${connectOptions.token}`
-      const userAuthenticationService = servicesManager;
+      const userAuthenticationService = servicesManager.services.userAuthenticationService;
       userAuthenticationService.getAuthorizationHeader = () => {
         return { 'Authorization': `Bearer ${connectOptions.token}` }
       }
