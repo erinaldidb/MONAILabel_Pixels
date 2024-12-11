@@ -38,11 +38,22 @@ print(f"Total Data Files: {len(data_files)}")
 
 # Build OHIF Plugin
 build_ohif_s = os.environ.get("BUILD_OHIF", "false")
+build_ohif_databricks_s = os.environ.get("DATABRICKS", "false")
+
 print(f"BUILD_OHIF = {build_ohif_s}")
+print(f"DATABRICKS = {build_ohif_databricks_s}")
 build_ohif = bool(strtobool(build_ohif_s)) if build_ohif_s else False
-if build_ohif:
+build_ohif_databricks_s = bool(strtobool(build_ohif_databricks_s)) if build_ohif_databricks_s else False
+
+if build_ohif_databricks_s:
+    print("Building OHIF for Databricks...")
+    script = "build.bat" if any(platform.win32_ver()) else f"build_databricks.sh"
+    command = os.path.realpath(os.path.join(os.path.dirname(__file__), "plugins", "ohifv3", script))
+    if os.path.exists(command):
+        subprocess.call(["sh", command])
+elif build_ohif:
     print("Building OHIF...")
-    script = "build.bat" if any(platform.win32_ver()) else "build.sh"
+    script = "build.bat" if any(platform.win32_ver()) else f"build.sh"
     command = os.path.realpath(os.path.join(os.path.dirname(__file__), "plugins", "ohifv3", script))
     if os.path.exists(command):
         subprocess.call(["sh", command])

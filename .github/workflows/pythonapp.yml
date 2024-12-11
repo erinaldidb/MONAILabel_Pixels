@@ -20,6 +20,11 @@ on:
   pull_request:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      databricks_ohif_build:
+        description: 'Build OHIF with Databricks Integration'
+        required: true
+        default: 'false'
 
 concurrency:
   # automatically cancel the previously triggered workflows when there's a newer version
@@ -119,8 +124,14 @@ jobs:
       - name: Build Package
         run: |
           ./runtests.sh --clean
-          BUILD_OHIF=true python setup.py sdist bdist_wheel
+          BUILD_OHIF=true DATABRICKS=${{ github.event.inputs.databricks_ohif_build }} python setup.py sdist bdist_wheel
           ls -l dist
+      - name: Upload Databricks OHIF artifacts
+        if: ${{ github.event.inputs.databricks_ohif_build == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ohif
+          path: monailabel/endpoints/static/ohif.zip
       - name: Verify Package
         run: |
           tmp_dir=$(mktemp -d)
