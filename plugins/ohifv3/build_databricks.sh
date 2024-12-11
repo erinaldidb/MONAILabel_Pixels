@@ -66,7 +66,7 @@ find .  -type d -name "node_modules" -exec rm -rf "{}" +
 
 echo "Patching index.html"
 cd ${install_dir}/../
-sed -i '' 's/app-config.js/app-config-custom.js/g' ohif/index.html
+sed -i '' 's/app-config.js/app-config-custom.js/g' index.html
 zip -r ohif.zip ohif
 echo "Compressed OHIF for release"
 
