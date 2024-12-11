@@ -66,9 +66,11 @@ find .  -type d -name "node_modules" -exec rm -rf "{}" +
 
 echo "Patching index.html"
 cd ${install_dir}
+sed -i.bak 's/app-config.js/app-config-custom.js/g' index.html && rm index.html.bak
 cd ..
-sed -i '' 's/app-config.js/app-config-custom.js/g' index.html
 zip -r ohif.zip ohif
-echo "Compressed OHIF for release"
+mkdir ${curr_dir}/dist/
+mv ohif.zip ${curr_dir}/dist/
+echo "Compressed OHIF for databricks release"
 
 cd ${curr_dir}
