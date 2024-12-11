@@ -15,6 +15,10 @@
 name: ohif_databricks
 
 on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
