@@ -29,6 +29,9 @@ git clone https://github.com/OHIF/Viewers.git
 cd Viewers
 git checkout d8ef36ed24466988586e19b855d2bbb86f8c657a
 
+#Patching microscopy
+sed -i.bak 's/\/dicom-microscopy-viewer\/dicomMicroscopyViewer.min.js/.\/dicom-microscopy-viewer\/dicomMicroscopyViewer.min.js/g' platform/app/src/pluginImports.js && rm platform/app/src/pluginImports.js.bak
+
 #cp -r ../extensions/monai-label extensions/
 #cp -r ../modes/monai-label modes/monai-label
 cd extensions
@@ -61,8 +64,8 @@ cp -r platform/app/dist/ ${install_dir}
 echo "Copied OHIF to ${install_dir}"
 
 cd ..
-rm -rf Viewers
-find .  -type d -name "node_modules" -exec rm -rf "{}" +
+#rm -rf Viewers
+#find .  -type d -name "node_modules" -exec rm -rf "{}" +
 
 echo "Patching index.html"
 cd ${install_dir}
