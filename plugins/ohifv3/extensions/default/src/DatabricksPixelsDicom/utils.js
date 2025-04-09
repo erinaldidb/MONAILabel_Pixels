@@ -79,10 +79,6 @@ export function processSeriesResults(qidoSeries) {
 }
 
 async function qidoStudiesSearch(databricksClient, warehouseId, pixelsTable, origParams) {
-
-  var limit = origParams.resultsPerPage ? `LIMIT ${origParams.resultsPerPage}` : "";
-  var offset = origParams.offset ? `OFFSET ${origParams.offset}` : "";
-
   let filters = ["1=1"];
   if ("patientName" in origParams) {
     filters.push(`lower(meta:['00100010'].Value) like lower('%${origParams.patientName}%')`);
@@ -123,8 +119,6 @@ async function qidoStudiesSearch(databricksClient, warehouseId, pixelsTable, ori
        FROM ${pixelsTable}
        WHERE ${filters.join(" AND ")}
        GROUP BY studyInstanceUid, date, time, accession, mrn
-       ${limit}
-       ${offset}
        `,
     "wait_timeout": "30s",
     "on_wait_timeout": "CANCEL"
