@@ -254,7 +254,13 @@ const commandsModule = ({
       labelmapObj.segmentsOnLabelmap.forEach(segmentIndex => {
         // segmentation service already has a color for each segment
         const segment = segmentationInOHIF?.segments[segmentIndex];
-        const { label, color } = segment;
+        var label = "unknown";
+        var color = [255, 255, 255];
+        if (segment) {
+          label = segment.label;
+          color = segment.color;
+        }
+        // if the segment is not found, use the default color
 
         const RecommendedDisplayCIELabValue = dcmjs.data.Colors.rgb2DICOMLAB(
           color.slice(0, 3).map(value => value / 255)
